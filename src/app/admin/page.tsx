@@ -10,15 +10,22 @@ import {
   Lock,
   Sparkles,
   Save,
+  AlertCircle,
+  GraduationCap,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { updateAIInstruction, getAIInstruction } from "./settings-action";
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<any>({ students: [], totalXp: 0 });
+  const [stats, setStats] = useState<any>({
+    students: [],
+    totalXp: 0,
+    commonMistakes: [],
+  });
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
+  // AI Customization State
   const [aiPrompt, setAiPrompt] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -29,16 +36,18 @@ export default function AdminDashboard() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      // 📍 Strict security for dash@edu.mn
       const adminEmail = "dash@edu.mn";
 
       if (user?.email === adminEmail) {
         setIsAdmin(true);
         try {
-          // Call the API route we created in File 1
+          // 1. Fetch Stats from our Secure API
           const response = await fetch("/api/admin/stats");
           const data = await response.json();
           setStats(data);
 
+          // 2. Fetch Current AI Instructions
           const currentInstruction = await getAIInstruction();
           setAiPrompt(currentInstruction);
         } catch (err) {
@@ -61,8 +70,8 @@ export default function AdminDashboard() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-indigo-600">
-        <Loader2 className="animate-spin" size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="animate-spin text-indigo-600" size={40} />
       </div>
     );
 
@@ -82,7 +91,8 @@ export default function AdminDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="min-h-screen bg-slate-50 p-8 font-sans">
+      {/* 🔝 Header */}
       <div className="max-w-6xl mx-auto mb-10 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tighter italic">
@@ -95,7 +105,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 📊 High-Level Stats */}
+      {/* 📊 Stat Cards */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <StatCard
           icon={<Users />}
@@ -107,7 +117,7 @@ export default function AdminDashboard() {
           icon={<BookOpen />}
           label="Total Lessons"
           value={stats.students.reduce(
-            (acc: any, s: any) => acc + s.unitsCompleted,
+            (acc: number, s: any) => acc + (s.unitsCompleted || 0),
             0,
           )}
           color="bg-indigo-600"
@@ -120,7 +130,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* 🧠 AI Settings Box */}
+      {/* 🧠 AI Teacher Personality Section */}
       <div className="max-w-6xl mx-auto mb-10 bg-white p-8 rounded-4xl shadow-xl border border-slate-100">
         <div className="flex items-center gap-4 mb-6">
           <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl">
@@ -128,10 +138,10 @@ export default function AdminDashboard() {
           </div>
           <div>
             <h2 className="text-xl font-black text-slate-800">
-              AI Teacher Personality
+              AI Teacher Brain
             </h2>
             <p className="text-slate-400 text-sm font-bold">
-              Set the global teaching instructions for all Gemini lessons.
+              Customize the global teaching personality.
             </p>
           </div>
         </div>
@@ -140,23 +150,83 @@ export default function AdminDashboard() {
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
           className="w-full h-32 p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-medium text-slate-700 focus:border-indigo-500 outline-none transition-all resize-none"
-          placeholder="e.g. Speak like a Mongolian historian and use English..."
+          placeholder="e.g. You are a friendly teacher at Gegee School. Use Mongolian examples..."
         />
 
         <button
           onClick={handleUpdateAI}
           disabled={saving}
-          className="mt-4 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-indigo-200"
+          className="mt-4 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2"
         >
-          {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+          {saving ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <Save size={20} />
+          )}
           {saving ? "SAVING..." : "UPDATE TEACHER BRAIN"}
         </button>
       </div>
 
-      {/* 📋 Student Table */}
-      <div className="max-w-6xl mx-auto bg-white rounded-4xl shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
-        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white text-slate-800">
-          <h2 className="text-xl font-black uppercase tracking-tighter">
+      {/* ⚠️ Struggles & Graduation Cards */}
+      <div className="max-w-6xl mx-auto mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Top School Struggles */}
+        <div className="bg-white p-8 rounded-4xl shadow-xl border border-rose-100">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl">
+              <AlertCircle size={24} />
+            </div>
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">
+              Top Struggles
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {stats.commonMistakes?.length > 0 ? (
+              stats.commonMistakes.map((m: any, i: number) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl"
+                >
+                  <span className="font-bold text-slate-700 italic">
+                    "{m.word_or_phrase}"
+                  </span>
+                  <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                    {m.count} Errors
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-400 font-medium italic">
+                No error data recorded yet.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Graduation Insights */}
+        <div className="bg-indigo-900 p-8 rounded-4xl shadow-xl text-white relative overflow-hidden flex flex-col justify-between">
+          <div className="relative z-10">
+            <h2 className="text-2xl font-black mb-2 uppercase italic tracking-tighter">
+              Graduation Status
+            </h2>
+            <p className="text-indigo-200 font-bold text-sm mb-6 max-w-50">
+              {stats.students.filter((s: any) => s.unitsCompleted >= 3).length}{" "}
+              students are ready for certification.
+            </p>
+          </div>
+          <button className="relative z-10 w-fit px-6 py-3 bg-white text-indigo-900 font-black rounded-xl hover:scale-105 transition-all text-xs uppercase tracking-widest shadow-lg">
+            View Candidates
+          </button>
+          <GraduationCap
+            size={150}
+            className="absolute -bottom-6 -right-6 text-white/10 rotate-12"
+          />
+        </div>
+      </div>
+
+      {/* 📋 Progress Table */}
+      <div className="max-w-6xl mx-auto bg-white rounded-4xl shadow-xl overflow-hidden border border-slate-100">
+        <div className="p-8 border-b border-slate-100 bg-white">
+          <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter">
             Student Progress Logs
           </h2>
         </div>
@@ -165,7 +235,7 @@ export default function AdminDashboard() {
             <thead className="bg-slate-50/50">
               <tr>
                 <th className="p-6 font-black text-[10px] uppercase text-slate-400 tracking-[0.2em]">
-                  Student Identifier
+                  Student ID
                 </th>
                 <th className="p-6 font-black text-[10px] uppercase text-slate-400 tracking-[0.2em] text-center">
                   Lessons
@@ -174,7 +244,7 @@ export default function AdminDashboard() {
                   XP
                 </th>
                 <th className="p-6 font-black text-[10px] uppercase text-slate-400 tracking-[0.2em] text-right">
-                  Last Sync
+                  Last Active
                 </th>
               </tr>
             </thead>
@@ -184,8 +254,8 @@ export default function AdminDashboard() {
                   key={student.id}
                   className="border-b border-slate-50 hover:bg-slate-50 transition-colors group"
                 >
-                  <td className="p-6 font-bold text-slate-600 group-hover:text-indigo-600 transition-colors font-mono text-sm">
-                    {student.id.slice(0, 12)}...
+                  <td className="p-6 font-bold text-slate-600 group-hover:text-indigo-600 transition-colors font-mono text-sm uppercase">
+                    {student.id.slice(0, 12)}
                   </td>
                   <td className="p-6 text-center font-black text-indigo-600">
                     {student.unitsCompleted}
@@ -194,7 +264,7 @@ export default function AdminDashboard() {
                     {student.totalXp}
                   </td>
                   <td className="p-6 text-right text-slate-400 text-xs font-bold">
-                    {new Date(student.lastActive).toLocaleString()}
+                    {new Date(student.lastActive).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
@@ -208,10 +278,8 @@ export default function AdminDashboard() {
 
 function StatCard({ icon, label, value, color }: any) {
   return (
-    <div className="bg-white p-8 rounded-4xl shadow-lg shadow-slate-200/30 border border-slate-100 flex items-center gap-6">
-      <div className={`${color} p-4 rounded-3xl text-white shadow-lg`}>
-        {icon}
-      </div>
+    <div className="bg-white p-8 rounded-4xl shadow-lg border border-slate-100 flex items-center gap-6">
+      <div className={`${color} p-4 rounded-3xl text-white`}>{icon}</div>
       <div>
         <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.15em] mb-1">
           {label}
