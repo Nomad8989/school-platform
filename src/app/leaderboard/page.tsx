@@ -12,7 +12,7 @@ export default function LeaderboardPage() {
   useEffect(() => {
     async function fetchLeaderboard() {
       try {
-        // 📍 Using our existing Admin Stats API to get student data
+        // 📍 We fetch from the Admin API we already built
         const res = await fetch("/api/admin/stats");
         const data = await res.json();
 
@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
           setStudents(sorted);
         }
       } catch (error) {
-        console.error("Failed to load leaderboard:", error);
+        console.error("Leaderboard fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,7 @@ export default function LeaderboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 key={student.id}
-                className={`flex items-center gap-4 p-6 rounded-4xl transition-all ${
+                className={`flex items-center gap-4 p-6 rounded-[2rem] transition-all ${
                   index === 0 ? "bg-amber-50" : "hover:bg-slate-50"
                 }`}
               >
@@ -100,7 +100,7 @@ export default function LeaderboardPage() {
             ))
           ) : (
             <div className="p-10 text-center text-slate-400 font-bold italic">
-              No rankings available yet. Be the first!
+              No rankings available yet.
             </div>
           )}
         </div>
